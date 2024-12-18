@@ -108,7 +108,6 @@ const char auth_page[] PROGMEM = R"=====(
         xhr.open('POST', '/save', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.send('ssid=' + encodeURIComponent(ssidValue) + '&password=' + encodeURIComponent(passwordValue));
-        document.location.href = '/restart';
       } else {
         alert('Пожалуйста, введите имя и пароль сети Wi-Fi.');
       }
@@ -244,6 +243,15 @@ void startAP() {
   server.on("/", HTTP_GET, []() {
     server.send(200, "text/html", auth_page); 
   });
+
+  server.on("/reset", HTTP_GET, []() {
+    EEPROM.begin(512);
+    EEPROM.write(0, 0); // Очистка EEPROM
+    EEPROM.commit();
+    server.send(200, "text/plain", "Настройки сброшены.");
+    delay(1000);
+    ESP.restart();
+  });
   Serial.println("Страничка авторизации доступа по ip 192.168.1.1");
 
   server.on("/save", HTTP_POST, []() {
@@ -288,20 +296,5 @@ void connectToWiFi() {
     Serial.println("Подключено к сети");
     Serial.println("IP-адрес: ");
     Serial.println(WiFi.localIP());
-
-    server.on("/setup", HTTP_GET, [](){
-      server.send(200, "text/html", reset_page);
-    });
-
-    server.on("/reset", HTTP_GET, []() {
-      EEPROM.begin(512);
-      EEPROM.write(0, 0); // Очистка EEPROM
-      EEPROM.commit();
-      server.send(200, "text/plain", "Настройки сброшены.");
-      delay(1000);
-      ESP.restart();
-    });
-
-    server.begin();
   }
 }
